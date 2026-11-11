@@ -131,6 +131,13 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 .wheel-label{fill:#fff;stroke:rgba(15,23,42,.45);stroke-width:2px;paint-order:stroke;stroke-linejoin:round;font-weight:700;text-anchor:middle;dominant-baseline:middle;pointer-events:none}
 .wheel-result{min-height:1.6em;margin:0;text-align:center;font-weight:700;font-size:1.1rem;color:var(--ink);overflow-wrap:anywhere}
 .wheel-result:empty:before{content:"Hasil putaran akan muncul di sini";font-size:.85rem;font-weight:400;color:var(--muted)}
+.wheel-dialog{width:min(420px,calc(100% - 32px));border:0;border-radius:16px;padding:24px;color:var(--text);box-shadow:0 20px 60px rgba(15,23,42,.28)}
+.wheel-dialog::backdrop{background:rgba(15,23,42,.55)}
+.wheel-dialog h2{margin:0 0 8px;color:var(--ink);font-size:1.2rem}
+.wheel-dialog p{margin:0;color:var(--muted);overflow-wrap:anywhere}
+.wheel-dialog-result{margin:12px 0 20px!important;color:var(--accent-dark)!important;font-size:1.15rem;font-weight:700}
+.wheel-dialog-actions{display:flex;flex-direction:column;gap:8px}
+@media (min-width:520px){.wheel-dialog-actions{flex-direction:row}}
 
 #toast{
   position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(20px);
@@ -452,6 +459,15 @@ Pilihan 6</textarea>
   <footer>Semua proses berjalan di browser Anda. Tidak ada data yang dikirim ke server.</footer>
 </div>
 <div id="toast" role="status" aria-live="polite"></div>
+<dialog class="wheel-dialog" id="wheel-choice-dialog" aria-labelledby="wheel-dialog-title" aria-describedby="wheel-dialog-description">
+  <h2 id="wheel-dialog-title">Pilihan terpilih</h2>
+  <p id="wheel-dialog-description">Apakah pilihan ini akan dihapus dari daftar atau tetap disimpan?</p>
+  <p class="wheel-dialog-result" id="wheel-dialog-result"></p>
+  <div class="wheel-dialog-actions">
+    <button class="btn" id="wheel-remove" type="button">Hapus pilihan</button>
+    <button class="btn alt" id="wheel-keep" type="button" autofocus>Tetap simpan</button>
+  </div>
+</dialog>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.6/JsBarcode.all.min.js"></script>
@@ -817,6 +833,7 @@ $('#lo-copy').addEventListener('click', () => copyText($('#lo-out').value));
 const WHEEL_COLORS = ['#059669', '#0F766E', '#0EA5E9', '#6366F1', '#8B5CF6', '#DB2777', '#EA580C', '#CA8A04'];
 let wheelRotation = 0;
 let wheelTimer;
+let pendingWheelSelection;
 function getWheelOptions() {
   return $('#wheel-options').value.split(/\r?\n/).map(option => option.trim()).filter(Boolean);
 }
@@ -864,6 +881,20 @@ function renderWheel() {
   if (options.length < 2) $('#wheel-result').textContent = 'Tambahkan minimal dua pilihan untuk memutar roda.';
 }
 $('#wheel-options').addEventListener('input', renderWheel);
+function closeWheelDialog() {
+  pendingWheelSelection = null;
+  $('#wheel-choice-dialog').close();
+  $('#wheel-spin').focus();
+}
+$('#wheel-keep').addEventListener('click', closeWheelDialog);
+$('#wheel-remove').addEventListener('click', () => {
+  if (!pendingWheelSelection) return;
+  const options = pendingWheelSelection.options;
+  options.splice(pendingWheelSelection.index, 1);
+  $('#wheel-options').value = options.join('\n');
+  closeWheelDialog();
+  renderWheel();
+});
 $('#wheel-spin').addEventListener('click', () => {
   const options = getWheelOptions();
   if (options.length < 2) {
@@ -883,9 +914,13 @@ $('#wheel-spin').addEventListener('click', () => {
 
   const finish = () => {
     clearTimeout(wheelTimer);
-    $('#wheel-result').textContent = `Hasil: ${options[selectedIndex]}`;
+    const selected = options[selectedIndex];
+    pendingWheelSelection = { options, index: selectedIndex };
+    $('#wheel-result').textContent = `Hasil: ${selected}`;
     $('#wheel-spin').disabled = false;
     $('#wheel-options').disabled = false;
+    $('#wheel-dialog-result').textContent = selected;
+    $('#wheel-choice-dialog').showModal();
   };
   $('#wheel').addEventListener('transitionend', finish, { once: true });
   wheelTimer = setTimeout(finish, 4500);
