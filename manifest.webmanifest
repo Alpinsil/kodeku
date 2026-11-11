@@ -1,0 +1,20 @@
+{
+  "id": "./",
+  "name": "Kodeku - Generator Praktis",
+  "short_name": "Kodeku",
+  "description": "Buat QR code, barcode, password, UUID, spin wheel, dan teks contoh langsung di perangkat Anda.",
+  "lang": "id",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#F8FAFC",
+  "theme_color": "#059669",
+  "icons": [
+    {
+      "src": "./icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

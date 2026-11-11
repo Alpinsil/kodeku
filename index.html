@@ -1,0 +1,899 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kodeku – Generator QR Code, Barcode, dan lainnya</title>
+<meta name="theme-color" content="#059669">
+<meta name="description" content="Buat QR code, barcode, password, UUID, spin wheel, dan teks contoh langsung di perangkat Anda.">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#F8FAFC;
+  --surface:#FFFFFF;
+  --ink:#0F172A;
+  --text:#334155;
+  --muted:#64748B;
+  --line:#E2E8F0;
+  --dash:#CBD5E1;
+  --accent:#059669;
+  --accent-dark:#047857;
+  --accent-soft:#D1FAE5;
+  --danger:#B42318;
+  --radius:16px;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{
+  margin:0;background:var(--paper);color:var(--text);
+  font-family:"Inter",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  font-size:15px;line-height:1.5;
+  border-top:3px solid transparent;
+  border-image:linear-gradient(90deg,#14B8A6,#334155 50%,#14B8A6) 1;
+}
+.wrap{max-width:1216px;margin:0 auto;padding:18px 14px 40px}
+
+/* header */
+.site-head{background:var(--surface);border-bottom:1px solid var(--line)}
+.site-head .in{max-width:1216px;margin:0 auto;padding:10px 14px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.brand-wrap{display:flex;align-items:center;gap:12px}
+.logo{width:38px;height:38px;border-radius:10px;background:var(--accent);display:grid;place-items:center;flex:none}
+.logo svg{width:22px;height:22px}
+.brand{margin:0;font-size:1.1rem;font-weight:700;color:var(--ink);line-height:1.2}
+.tag{margin:0;font-size:.7rem;color:var(--muted)}
+.badge{background:var(--accent-soft);color:var(--accent-dark);font-size:.75rem;font-weight:600;padding:3px 10px;border-radius:99px;white-space:nowrap}
+.install-btn{flex:none;border:0;border-radius:10px;background:var(--accent);color:#fff;font:inherit;font-weight:600;font-size:.8rem;line-height:1.2;padding:11px 12px;min-height:44px;cursor:pointer}
+.install-btn:hover{background:var(--accent-dark)}
+.install-btn:focus-visible{outline:3px solid #6EE7B7;outline-offset:2px}
+
+/* navigasi */
+.tool-search{margin:0 0 12px}
+.tool-search label{display:block;margin-bottom:6px}
+.tool-search input{font:inherit;color:var(--ink);background:#fff;border:1px solid var(--dash);border-radius:10px;padding:11px 12px;width:100%;min-height:46px}
+.search-status{margin:5px 0 0;color:var(--muted);font-size:.8rem}
+nav{display:flex;flex-wrap:nowrap;align-items:center;gap:8px;margin-bottom:18px;overflow-x:auto;padding:2px 0 8px;overscroll-behavior-x:contain;scrollbar-width:thin}
+nav .grp{display:none;margin:0 2px 0 14px;font-size:.8rem;font-weight:600;color:var(--muted)}
+nav .grp:first-child{margin-left:0}
+nav button{
+  all:unset;box-sizing:border-box;cursor:pointer;padding:7px 14px;border-radius:99px;
+  min-height:44px;white-space:nowrap;flex:none;font-size:.875rem;font-weight:500;color:var(--text);background:var(--surface);border:1px solid var(--line);border-radius:99px;padding:8px 14px;
+}
+nav button:hover{border-color:var(--accent);color:var(--accent-dark)}
+nav button[aria-current="page"]{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
+nav button:focus-visible,.btn:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid #6EE7B7;outline-offset:1px}
+
+/* tampilan */
+.view{display:none}
+.view.active{display:block}
+h1{font-size:1.25rem;font-weight:700;color:var(--ink);letter-spacing:-.01em;margin:0 0 4px}
+.lead{color:var(--muted);margin:0 0 20px;max-width:64ch;font-size:.9rem}
+.workspace{display:grid;grid-template-columns:minmax(0,1fr);gap:14px;align-items:start}
+.card{min-width:0;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:18px;box-shadow:0 1px 2px rgba(15,23,42,.04)}
+.card-title{display:flex;align-items:center;gap:8px;margin:0 0 16px;padding-bottom:14px;border-bottom:1px solid var(--line);font-size:1rem;font-weight:700;color:var(--ink)}
+.card-title svg{width:18px;height:18px;color:var(--muted)}
+
+.f{display:grid;gap:6px;margin-bottom:14px}
+.f:last-child{margin-bottom:0}
+label,.lbl{font-weight:600;font-size:.85rem;color:var(--ink)}
+.hint{color:var(--muted);font-size:.8rem;margin:0}
+input[type=text],input[type=tel],input[type=email],input[type=url],input[type=password],input[type=number],select,textarea{
+  font:inherit;color:var(--ink);background:#fff;border:1px solid var(--dash);
+  border-radius:10px;padding:10px 12px;width:100%;
+}
+textarea{resize:vertical;min-height:96px}
+input[type=color]{width:100%;height:42px;padding:3px;border:1px solid var(--dash);border-radius:10px;background:#fff;cursor:pointer}
+input[type=range]{width:100%;accent-color:var(--accent)}
+.row{display:grid;grid-template-columns:1fr;gap:12px}
+.badge{display:none}
+.check{display:flex;align-items:center;gap:8px;font-weight:500;color:var(--text)}
+.check input{width:18px;height:18px;accent-color:var(--accent)}
+.divider{border:0;border-top:1px solid var(--line);margin:20px 0}
+.sub{font-size:.9rem;font-weight:700;color:var(--ink);margin:0 0 12px}
+.val{font-weight:500;color:var(--muted)}
+
+/* panel hasil */
+.stage{position:static}
+.label-card{
+  background:var(--surface);border:2px dashed var(--dash);border-radius:12px;min-height:clamp(190px,55vw,260px);
+  display:flex;align-items:center;justify-content:center;padding:14px;overflow:hidden;
+}
+.qr-holder{display:inline-block;padding:14px;line-height:0}
+.qr-holder img,.qr-holder canvas{max-width:100%;height:auto;display:block}
+.qr-holder.empty{display:none}
+#bc-svg{width:100%;height:auto;display:block}
+.msg{color:var(--muted);font-size:.85rem;min-height:1.4em;margin:12px 0 0}
+.msg.err{color:var(--danger)}
+.label-card .placeholder{color:var(--muted);text-align:center;font-size:.85rem;max-width:26ch}
+.actions{display:flex;flex-direction:column;gap:8px;margin-top:16px;padding-top:16px;border-top:1px solid var(--line)}
+.btn{
+  all:unset;box-sizing:border-box;cursor:pointer;padding:12px 16px;border-radius:10px;width:100%;min-height:46px;
+  font-weight:600;font-size:.95rem;text-align:center;background:var(--accent);color:#fff;
+  transition:background .15s;
+}
+.btn:hover{background:var(--accent-dark)}
+.btn.alt{background:#fff;color:var(--text);box-shadow:inset 0 0 0 1px var(--dash)}
+.btn.alt:hover{background:var(--paper)}
+.btn[disabled]{background:#CBD5E1;color:var(--muted);box-shadow:none;cursor:not-allowed}
+
+/* generator teks */
+.out{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.9rem}
+.pw-out{font-size:1.1rem;word-break:break-all}
+.meter{height:8px;background:var(--line);border-radius:99px;overflow:hidden;margin-top:12px}
+.meter i{display:block;height:100%;width:0;background:var(--accent);transition:width .2s}
+.lists{display:grid;gap:10px}
+.wheel-stage{display:flex;flex-direction:column;align-items:center;gap:16px}
+.wheel-pointer{width:0;height:0;border-left:14px solid transparent;border-right:14px solid transparent;border-top:26px solid var(--ink);z-index:1;margin-bottom:-28px}
+.wheel{display:block;width:min(72vw,320px);height:auto;aspect-ratio:1;border:8px solid #fff;border-radius:50%;background:#fff;box-shadow:0 0 0 2px var(--line),0 8px 24px rgba(15,23,42,.12);transition:transform 4.2s cubic-bezier(.12,.72,.12,1);will-change:transform}
+.wheel-label{fill:#fff;stroke:rgba(15,23,42,.45);stroke-width:2px;paint-order:stroke;stroke-linejoin:round;font-weight:700;text-anchor:middle;dominant-baseline:middle;pointer-events:none}
+.wheel-result{min-height:1.6em;margin:0;text-align:center;font-weight:700;font-size:1.1rem;color:var(--ink);overflow-wrap:anywhere}
+.wheel-result:empty:before{content:"Hasil putaran akan muncul di sini";font-size:.85rem;font-weight:400;color:var(--muted)}
+
+#toast{
+  position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(20px);
+  background:var(--ink);color:#fff;padding:10px 18px;border-radius:99px;font-weight:600;font-size:.875rem;
+  opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;
+}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+footer{margin-top:40px;color:var(--muted);font-size:.8rem}
+
+@media (max-width:960px){
+  .stage{position:static}
+}
+@media (min-width:520px){
+  .wrap{padding:24px 20px 48px}
+  .site-head .in{padding:12px 20px}
+  .row{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .actions{flex-direction:row}
+}
+@media (prefers-reduced-motion:reduce){.wheel{transition:none}}
+@media (min-width:720px){
+  .wrap{padding:30px 24px 56px}
+  .site-head .in{padding:12px 24px}
+  nav{flex-wrap:wrap;overflow:visible;margin-bottom:24px}
+  nav .grp{display:block}
+  .card{padding:24px}
+  .badge{display:block}
+}
+@media (min-width:960px){
+  .workspace{grid-template-columns:minmax(0,1fr) 388px;gap:24px}
+  .stage{position:sticky;top:16px}
+}
+@media (max-width:380px){
+  .brand-wrap{gap:8px}
+  .logo{width:34px;height:34px}
+  .brand{font-size:1rem}
+  .tag{font-size:.64rem}
+  .install-btn{padding:10px}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<header class="site-head">
+  <div class="in">
+    <div class="brand-wrap">
+      <div class="logo" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3zM20 14v1M14 20h1M20 18v3h-3"/></svg>
+      </div>
+      <div>
+        <p class="brand">Kodeku</p>
+        <p class="tag">QR Code, Barcode &amp; Generator Lainnya</p>
+      </div>
+    </div>
+    <button class="install-btn" id="install-btn" type="button" hidden>Instal aplikasi</button>
+    <span class="badge">Diproses di browser Anda</span>
+  </div>
+</header>
+<div class="wrap">
+
+  <div class="app">
+    <div class="tool-search">
+      <label for="tool-search">Cari fitur</label>
+      <input id="tool-search" type="search" placeholder="Contoh: WhatsApp, barcode, password" autocomplete="off" aria-controls="nav">
+      <p id="search-status" class="search-status" role="status" aria-live="polite"></p>
+    </div>
+    <nav id="nav" aria-label="Pilih generator">
+      <p class="grp">QR Code</p>
+      <button data-tool="qr-text" data-keywords="qr kode teks tautan url">Teks &amp; URL</button>
+      <button data-tool="qr-wifi" data-keywords="qr jaringan wifi internet">WiFi</button>
+      <button data-tool="qr-wa" data-keywords="qr whatsapp wa chat pesan">WhatsApp</button>
+      <button data-tool="qr-vcard" data-keywords="qr kontak vcard telepon">Kontak (vCard)</button>
+      <button data-tool="qr-email" data-keywords="qr email surel">Email</button>
+      <p class="grp">Barcode</p>
+      <button data-tool="barcode" data-keywords="kode batang barcode produk">Barcode</button>
+      <p class="grp">Lainnya</p>
+      <button data-tool="password" data-keywords="kata sandi password generator">Password</button>
+      <button data-tool="uuid" data-keywords="id unik uuid identifier">UUID</button>
+      <button data-tool="lorem" data-keywords="teks contoh lorem ipsum">Lorem ipsum</button>
+      <button data-tool="wheel" data-keywords="roda putar spin wheel undian acak pilihan">Spin wheel</button>
+    </nav>
+    <p id="search-empty" class="search-status" role="status" hidden>Tidak ada fitur yang cocok. Coba kata kunci lain.</p>
+
+    <main>
+      <!-- ===== QR CODE ===== -->
+      <section class="view" id="view-qr">
+        <h1 id="qr-title">QR Code</h1>
+        <p class="lead" id="qr-lead"></p>
+        <div class="workspace">
+          <div class="card">
+            <div data-qr="text" class="fields">
+              <div class="f">
+                <label for="qr-text-in">Teks atau tautan</label>
+                <textarea id="qr-text-in" placeholder="https://contoh.com">https://contoh.com</textarea>
+              </div>
+            </div>
+
+            <div data-qr="wifi" class="fields" hidden>
+              <div class="f"><label for="wifi-ssid">Nama jaringan (SSID)</label><input type="text" id="wifi-ssid" autocomplete="off"></div>
+              <div class="f"><label for="wifi-pass">Kata sandi</label><input type="text" id="wifi-pass" autocomplete="off"></div>
+              <div class="row">
+                <div class="f"><label for="wifi-enc">Keamanan</label>
+                  <select id="wifi-enc"><option value="WPA">WPA/WPA2/WPA3</option><option value="WEP">WEP</option><option value="nopass">Tanpa sandi</option></select>
+                </div>
+                <div class="f"><span class="lbl">Opsi</span><label class="check"><input type="checkbox" id="wifi-hidden"> Jaringan tersembunyi</label></div>
+              </div>
+            </div>
+
+            <div data-qr="wa" class="fields" hidden>
+              <div class="f"><label for="wa-num">Nomor WhatsApp</label><input type="tel" id="wa-num" placeholder="0812 3456 7890">
+                <p class="hint">Awalan 0 otomatis diganti 62 (Indonesia).</p></div>
+              <div class="f"><label for="wa-msg">Pesan awal (opsional)</label><textarea id="wa-msg" placeholder="Halo, saya ingin bertanya…"></textarea></div>
+            </div>
+
+            <div data-qr="vcard" class="fields" hidden>
+              <div class="f"><label for="vc-name">Nama lengkap</label><input type="text" id="vc-name"></div>
+              <div class="row">
+                <div class="f"><label for="vc-org">Perusahaan</label><input type="text" id="vc-org"></div>
+                <div class="f"><label for="vc-tel">Telepon</label><input type="tel" id="vc-tel"></div>
+              </div>
+              <div class="row">
+                <div class="f"><label for="vc-email">Email</label><input type="email" id="vc-email"></div>
+                <div class="f"><label for="vc-url">Situs web</label><input type="url" id="vc-url" placeholder="https://"></div>
+              </div>
+            </div>
+
+            <div data-qr="email" class="fields" hidden>
+              <div class="f"><label for="em-to">Alamat email</label><input type="email" id="em-to"></div>
+              <div class="f"><label for="em-sub">Subjek</label><input type="text" id="em-sub"></div>
+              <div class="f"><label for="em-body">Isi pesan</label><textarea id="em-body"></textarea></div>
+            </div>
+
+            <hr class="divider">
+            <p class="sub">Tampilan</p>
+            <div class="row">
+              <div class="f"><label for="qr-fg">Warna kode</label><input type="color" id="qr-fg" value="#0F1B33"></div>
+              <div class="f"><label for="qr-bg">Warna latar</label><input type="color" id="qr-bg" value="#FFFFFF"></div>
+            </div>
+            <div class="row">
+              <div class="f"><label for="qr-size">Ukuran: <span class="val" id="qr-size-v">320 px</span></label>
+                <input type="range" id="qr-size" min="160" max="800" step="20" value="320"></div>
+              <div class="f"><label for="qr-ec">Koreksi kesalahan</label>
+                <select id="qr-ec">
+                  <option value="L">Rendah (7%)</option>
+                  <option value="M">Sedang (15%)</option>
+                  <option value="Q">Tinggi (25%)</option>
+                  <option value="H" selected>Sangat tinggi (30%)</option>
+                </select></div>
+            </div>
+          </div>
+
+          <div class="card stage">
+            <h2 class="card-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/></svg>Hasil</h2>
+            <div class="label-card">
+              <div class="qr-holder empty" id="qr-box"></div>
+              <p class="placeholder" id="qr-ph">Isi formulir untuk melihat QR code.</p>
+            </div>
+            <p class="msg" id="qr-msg" role="status"></p>
+            <div class="actions">
+              <button class="btn" id="qr-dl">Unduh PNG</button>
+              <button class="btn alt" id="qr-copy">Salin isi</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== BARCODE ===== -->
+      <section class="view" id="view-barcode">
+        <h1>Barcode</h1>
+        <p class="lead">Buat barcode untuk produk, inventaris, atau label. Unduh sebagai PNG atau SVG.</p>
+        <div class="workspace">
+          <div class="card">
+            <div class="f"><label for="bc-fmt">Format</label>
+              <select id="bc-fmt">
+                <option value="CODE128">Code 128 (umum)</option>
+                <option value="EAN13">EAN-13</option>
+                <option value="EAN8">EAN-8</option>
+                <option value="UPC">UPC-A</option>
+                <option value="CODE39">Code 39</option>
+                <option value="ITF14">ITF-14</option>
+              </select></div>
+            <div class="f"><label for="bc-val">Nilai</label><input type="text" id="bc-val" value="Kodeku-2026" autocomplete="off">
+              <p class="hint" id="bc-hint"></p></div>
+            <hr class="divider">
+            <p class="sub">Tampilan</p>
+            <div class="row">
+              <div class="f"><label for="bc-w">Tebal garis: <span class="val" id="bc-w-v">2</span></label><input type="range" id="bc-w" min="1" max="5" step="1" value="2"></div>
+              <div class="f"><label for="bc-h">Tinggi: <span class="val" id="bc-h-v">100</span></label><input type="range" id="bc-h" min="40" max="240" step="10" value="100"></div>
+            </div>
+            <div class="row">
+              <div class="f"><label for="bc-fg">Warna garis</label><input type="color" id="bc-fg" value="#0F1B33"></div>
+              <div class="f"><label for="bc-bg">Warna latar</label><input type="color" id="bc-bg" value="#FFFFFF"></div>
+            </div>
+            <label class="check"><input type="checkbox" id="bc-txt" checked> Tampilkan teks di bawah barcode</label>
+          </div>
+
+          <div class="card stage">
+            <h2 class="card-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/></svg>Hasil</h2>
+            <div class="label-card"><svg id="bc-svg" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Pratinjau barcode"></svg></div>
+            <p class="msg" id="bc-msg" role="status"></p>
+            <div class="actions">
+              <button class="btn" id="bc-png">Unduh PNG</button>
+              <button class="btn alt" id="bc-svgdl">Unduh SVG</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== PASSWORD ===== -->
+      <section class="view" id="view-password">
+        <h1>Generator password</h1>
+        <p class="lead">Password acak yang dibuat dengan generator kriptografis browser. Tidak dikirim ke mana pun.</p>
+        <div class="workspace">
+          <div class="card">
+            <div class="f"><label for="pw-len">Panjang: <span class="val" id="pw-len-v">16</span> karakter</label>
+              <input type="range" id="pw-len" min="8" max="64" value="16"></div>
+            <div class="lists">
+              <label class="check"><input type="checkbox" id="pw-up" checked> Huruf besar (A–Z)</label>
+              <label class="check"><input type="checkbox" id="pw-lo" checked> Huruf kecil (a–z)</label>
+              <label class="check"><input type="checkbox" id="pw-num" checked> Angka (0–9)</label>
+              <label class="check"><input type="checkbox" id="pw-sym" checked> Simbol (!@#$…)</label>
+              <label class="check"><input type="checkbox" id="pw-amb"> Hindari karakter mirip (0 O 1 l I)</label>
+            </div>
+          </div>
+          <div class="card stage">
+            <h2 class="card-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/></svg>Hasil</h2>
+            <div class="label-card" style="min-height:120px"><div class="out pw-out" id="pw-out" ></div></div>
+            <div class="meter" aria-hidden="true"><i id="pw-bar"></i></div>
+            <p class="msg" id="pw-msg" role="status"></p>
+            <div class="actions">
+              <button class="btn" id="pw-copy">Salin</button>
+              <button class="btn alt" id="pw-new">Buat ulang</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== UUID ===== -->
+      <section class="view" id="view-uuid">
+        <h1>Generator UUID</h1>
+        <p class="lead">UUID versi 4 untuk ID database, token, atau penanda unik.</p>
+        <div class="workspace">
+          <div class="card">
+            <div class="f"><label for="uu-n">Jumlah: <span class="val" id="uu-n-v">5</span></label>
+              <input type="range" id="uu-n" min="1" max="50" value="5"></div>
+            <div class="lists">
+              <label class="check"><input type="checkbox" id="uu-up"> Huruf besar</label>
+              <label class="check"><input type="checkbox" id="uu-nd"> Tanpa tanda hubung</label>
+            </div>
+          </div>
+          <div class="card stage">
+            <h2 class="card-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/></svg>Hasil</h2>
+            <div class="label-card" style="align-items:flex-start;min-height:200px">
+              <textarea class="out" id="uu-out" readonly rows="8" style="border:0;background:transparent;min-height:180px"></textarea>
+            </div>
+            <div class="actions">
+              <button class="btn" id="uu-copy">Salin semua</button>
+              <button class="btn alt" id="uu-new">Buat ulang</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== LOREM ===== -->
+      <section class="view" id="view-lorem">
+        <h1>Generator Lorem ipsum</h1>
+        <p class="lead">Teks contoh untuk mengisi desain dan prototipe.</p>
+        <div class="workspace">
+          <div class="card">
+            <div class="f"><label for="lo-n">Jumlah paragraf: <span class="val" id="lo-n-v">3</span></label>
+              <input type="range" id="lo-n" min="1" max="10" value="3"></div>
+            <label class="check"><input type="checkbox" id="lo-start" checked> Mulai dengan “Lorem ipsum dolor sit amet”</label>
+          </div>
+          <div class="card stage">
+            <h2 class="card-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/></svg>Hasil</h2>
+            <div class="label-card" style="align-items:flex-start;min-height:200px">
+              <textarea id="lo-out" readonly rows="10" style="border:0;background:transparent;min-height:220px"></textarea>
+            </div>
+            <div class="actions">
+              <button class="btn" id="lo-copy">Salin</button>
+              <button class="btn alt" id="lo-new">Buat ulang</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== SPIN WHEEL ===== -->
+      <section class="view" id="view-wheel">
+        <h1>Spin wheel</h1>
+        <p class="lead">Masukkan pilihan, lalu putar roda untuk memilih satu secara acak.</p>
+        <div class="workspace">
+          <div class="card">
+            <div class="f">
+              <label for="wheel-options">Daftar pilihan</label>
+              <textarea id="wheel-options" rows="8" placeholder="Satu pilihan per baris">Pilihan 1
+Pilihan 2
+Pilihan 3
+Pilihan 4
+Pilihan 5
+Pilihan 6</textarea>
+              <p class="hint">Masukkan minimal dua pilihan, satu pilihan per baris.</p>
+            </div>
+            <div class="actions">
+              <button class="btn" id="wheel-spin" type="button">Putar roda</button>
+            </div>
+          </div>
+          <div class="card stage">
+            <h2 class="card-title">Hasil undian</h2>
+            <div class="wheel-stage">
+              <div class="wheel-pointer" aria-hidden="true"></div>
+              <svg class="wheel" id="wheel" viewBox="0 0 320 320" role="img" aria-label="Pratinjau roda pilihan"></svg>
+              <p class="wheel-result" id="wheel-result" role="status" aria-live="polite"></p>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <footer>Semua proses berjalan di browser Anda. Tidak ada data yang dikirim ke server.</footer>
+</div>
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.6/JsBarcode.all.min.js"></script>
+<script>
+let installPrompt;
+const installButton = document.querySelector('#install-btn');
+window.addEventListener('beforeinstallprompt', event => {
+  event.preventDefault();
+  installPrompt = event;
+  installButton.hidden = false;
+});
+installButton.addEventListener('click', async () => {
+  if (!installPrompt) return;
+  installPrompt.prompt();
+  await installPrompt.userChoice;
+  installPrompt = null;
+  installButton.hidden = true;
+});
+window.addEventListener('appinstalled', () => {
+  installPrompt = null;
+  installButton.hidden = true;
+});
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./service-worker.js').catch(error => {
+      console.error('Pendaftaran service worker gagal:', error);
+    });
+  });
+}
+
+/* ---------- utilitas ---------- */
+const $  = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const debounce = (fn, ms = 120) => { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); }; };
+
+let toastTimer;
+function toast(msg) {
+  const el = $('#toast');
+  el.textContent = msg; el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 1800);
+}
+async function copyText(text) {
+  try { await navigator.clipboard.writeText(text); }
+  catch (e) {
+    const ta = document.createElement('textarea');
+    ta.value = text; document.body.appendChild(ta); ta.select();
+    document.execCommand('copy'); ta.remove();
+  }
+  toast('Tersalin');
+}
+function download(url, name) {
+  const a = document.createElement('a');
+  a.href = url; a.download = name;
+  document.body.appendChild(a); a.click(); a.remove();
+}
+// angka acak seragam [0, n) memakai crypto
+function rand(n) {
+  const a = new Uint32Array(1);
+  const lim = Math.floor(4294967296 / n) * n;
+  let x;
+  do { crypto.getRandomValues(a); x = a[0]; } while (x >= lim);
+  return x % n;
+}
+
+/* ---------- navigasi ---------- */
+const QR_INFO = {
+  'qr-text':  ['QR Code: teks & URL', 'Ubah tautan atau teks apa pun menjadi QR code.'],
+  'qr-wifi':  ['QR Code: WiFi', 'Tamu cukup memindai untuk terhubung ke jaringan, tanpa mengetik sandi.'],
+  'qr-wa':    ['QR Code: WhatsApp', 'Pemindai langsung membuka chat WhatsApp dengan pesan awal yang Anda tulis.'],
+  'qr-vcard': ['QR Code: kontak', 'Simpan data kontak ke ponsel dengan sekali pindai.'],
+  'qr-email': ['QR Code: email', 'Membuka aplikasi email dengan penerima, subjek, dan isi yang sudah terisi.']
+};
+let current = 'qr-text';
+
+function show(tool) {
+  current = tool;
+  $$('#nav button').forEach(b => b.setAttribute('aria-current', b.dataset.tool === tool ? 'page' : 'false'));
+  const isQR = tool.startsWith('qr-');
+  $$('.view').forEach(v => v.classList.toggle('active', v.id === (isQR ? 'view-qr' : 'view-' + tool)));
+  if (isQR) {
+    $$('[data-qr]').forEach(f => f.hidden = f.dataset.qr !== tool.slice(3));
+    $('#qr-title').textContent = QR_INFO[tool][0];
+    $('#qr-lead').textContent = QR_INFO[tool][1];
+    renderQR();
+  } else if (tool === 'barcode')  renderBarcode();
+  else if (tool === 'password')   genPassword();
+  else if (tool === 'uuid')       genUUID();
+  else if (tool === 'lorem')      genLorem();
+  else if (tool === 'wheel')      renderWheel();
+  history.replaceState(null, '', '#' + tool);
+}
+$('#nav').addEventListener('click', e => {
+  const b = e.target.closest('button[data-tool]');
+  if (b) show(b.dataset.tool);
+});
+$('#tool-search').addEventListener('input', () => {
+  const query = $('#tool-search').value.trim().toLocaleLowerCase('id');
+  const buttons = $$('#nav button[data-tool]');
+  let matches = 0;
+  buttons.forEach(button => {
+    const text = (button.textContent + ' ' + button.dataset.keywords).toLocaleLowerCase('id');
+    const visible = !query || text.includes(query);
+    button.hidden = !visible;
+    if (visible) matches++;
+  });
+  $$('#nav .grp').forEach(group => group.hidden = !!query);
+  $('#search-empty').hidden = matches > 0;
+  $('#search-status').textContent = query ? `${matches} fitur ditemukan.` : '';
+});
+
+/* ---------- QR code ---------- */
+function qrPayload() {
+  const t = current.slice(3);
+  const v = id => ($('#' + id).value || '').trim();
+
+  if (t === 'text') return v('qr-text-in');
+
+  if (t === 'wifi') {
+    const ssid = v('wifi-ssid'); if (!ssid) return '';
+    const enc = $('#wifi-enc').value;
+    const esc = s => s.replace(/([\\;,:"])/g, '\\$1');
+    const parts = ['T:' + enc, 'S:' + esc(ssid)];
+    if (enc !== 'nopass') parts.push('P:' + esc($('#wifi-pass').value));
+    if ($('#wifi-hidden').checked) parts.push('H:true');
+    return 'WIFI:' + parts.join(';') + ';;';
+  }
+
+  if (t === 'wa') {
+    let n = v('wa-num').replace(/\D/g, ''); if (!n) return '';
+    if (n.startsWith('0')) n = '62' + n.slice(1);
+    const m = v('wa-msg');
+    return 'https://wa.me/' + n + (m ? '?text=' + encodeURIComponent(m) : '');
+  }
+
+  if (t === 'vcard') {
+    const name = v('vc-name'); if (!name) return '';
+    const p = name.split(/\s+/);
+    const last = p.length > 1 ? p.pop() : '';
+    const lines = ['BEGIN:VCARD', 'VERSION:3.0', `N:${last};${p.join(' ')};;;`, `FN:${name}`];
+    if (v('vc-org'))   lines.push('ORG:' + v('vc-org'));
+    if (v('vc-tel'))   lines.push('TEL;TYPE=CELL:' + v('vc-tel'));
+    if (v('vc-email')) lines.push('EMAIL:' + v('vc-email'));
+    if (v('vc-url'))   lines.push('URL:' + v('vc-url'));
+    lines.push('END:VCARD');
+    return lines.join('\n');
+  }
+
+  if (t === 'email') {
+    const to = v('em-to'); if (!to) return '';
+    const q = [];
+    if (v('em-sub'))  q.push('subject=' + encodeURIComponent(v('em-sub')));
+    if (v('em-body')) q.push('body=' + encodeURIComponent($('#em-body').value.trim()));
+    return 'mailto:' + to + (q.length ? '?' + q.join('&') : '');
+  }
+  return '';
+}
+
+function setQRState(ok) {
+  $('#qr-dl').disabled = !ok;
+  $('#qr-copy').disabled = !ok;
+}
+function renderQR() {
+  const box = $('#qr-box'), msg = $('#qr-msg'), ph = $('#qr-ph');
+  box.innerHTML = ''; msg.textContent = ''; msg.classList.remove('err');
+  $('#qr-size-v').textContent = $('#qr-size').value + ' px';
+
+  const text = qrPayload();
+  if (!text) {
+    box.classList.add('empty'); ph.hidden = false; setQRState(false); return;
+  }
+  const size = +$('#qr-size').value;
+  box.style.background = $('#qr-bg').value;
+  try {
+    new QRCode(box, {
+      text, width: size, height: size,
+      colorDark: $('#qr-fg').value, colorLight: $('#qr-bg').value,
+      correctLevel: QRCode.CorrectLevel[$('#qr-ec').value]
+    });
+    box.classList.remove('empty'); ph.hidden = true; setQRState(true);
+  } catch (e) {
+    box.innerHTML = ''; box.classList.add('empty'); ph.hidden = false;
+    msg.textContent = 'Isi terlalu panjang untuk QR code. Persingkat isi atau turunkan koreksi kesalahan.';
+    msg.classList.add('err'); setQRState(false);
+  }
+}
+$('#view-qr').addEventListener('input', debounce(renderQR));
+
+$('#qr-dl').addEventListener('click', () => {
+  const c = $('#qr-box canvas'); if (!c) return;
+  const m = Math.round(c.width * 0.06);           // zona tenang di sekeliling kode
+  const o = document.createElement('canvas');
+  o.width = o.height = c.width + m * 2;
+  const x = o.getContext('2d');
+  x.fillStyle = $('#qr-bg').value; x.fillRect(0, 0, o.width, o.height);
+  x.drawImage(c, m, m);
+  download(o.toDataURL('image/png'), 'qrcode-' + current.slice(3) + '.png');
+});
+$('#qr-copy').addEventListener('click', () => copyText(qrPayload()));
+
+/* ---------- Barcode ---------- */
+const BC = {
+  CODE128: { hint: 'Teks atau angka bebas (ASCII).',                         sample: 'Kodeku-2026' },
+  EAN13:   { hint: '12 digit (digit ke-13 dihitung otomatis) atau 13 digit.', sample: '590123412345' },
+  EAN8:    { hint: '7 digit (digit ke-8 dihitung otomatis) atau 8 digit.',    sample: '9638507' },
+  UPC:     { hint: '11 digit (digit ke-12 dihitung otomatis) atau 12 digit.', sample: '12345678901' },
+  CODE39:  { hint: 'Huruf A–Z, angka, spasi, dan karakter - . $ / + %.',       sample: 'KODEKU 123' },
+  ITF14:   { hint: '13 digit (digit ke-14 dihitung otomatis) atau 14 digit.', sample: '1234567890123' }
+};
+let prevFmt = 'CODE128';
+
+function setBCState(ok) { $('#bc-png').disabled = !ok; $('#bc-svgdl').disabled = !ok; }
+function renderBarcode() {
+  const svg = $('#bc-svg'), msg = $('#bc-msg');
+  const fmt = $('#bc-fmt').value, val = $('#bc-val').value;
+  $('#bc-hint').textContent = BC[fmt].hint;
+  $('#bc-w-v').textContent = $('#bc-w').value;
+  $('#bc-h-v').textContent = $('#bc-h').value;
+  msg.textContent = ''; msg.classList.remove('err');
+  svg.innerHTML = '';
+
+  if (!val) { msg.textContent = 'Masukkan nilai barcode.'; setBCState(false); return; }
+  let ok = true;
+  try {
+    JsBarcode(svg, val, {
+      format: fmt,
+      width: +$('#bc-w').value, height: +$('#bc-h').value,
+      displayValue: $('#bc-txt').checked,
+      lineColor: $('#bc-fg').value, background: $('#bc-bg').value,
+      margin: 16, fontSize: 16, font: 'sans-serif',
+      valid: v => { ok = v; }
+    });
+    if (!ok) throw new Error('invalid');
+    const w = svg.width.baseVal.value, h = svg.height.baseVal.value;
+    svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
+    svg.style.maxWidth = w + 'px';
+    setBCState(true);
+  } catch (e) {
+    svg.innerHTML = '';
+    msg.textContent = 'Nilai tidak sesuai format ini. ' + BC[fmt].hint;
+    msg.classList.add('err'); setBCState(false);
+  }
+}
+// ganti contoh nilai saat format berubah (hanya jika nilai masih contoh bawaan)
+$('#bc-fmt').addEventListener('input', () => {
+  const fmt = $('#bc-fmt').value;
+  if ($('#bc-val').value === BC[prevFmt].sample) $('#bc-val').value = BC[fmt].sample;
+  prevFmt = fmt;
+});
+$('#view-barcode').addEventListener('input', debounce(renderBarcode));
+
+function svgString() {
+  const svg = $('#bc-svg');
+  svg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+  return new XMLSerializer().serializeToString(svg);
+}
+$('#bc-svgdl').addEventListener('click', () => {
+  const url = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svgString());
+  download(url, 'barcode.svg');
+});
+$('#bc-png').addEventListener('click', () => {
+  const svg = $('#bc-svg');
+  const w = svg.width.baseVal.value, h = svg.height.baseVal.value;
+  const img = new Image();
+  img.onload = () => {
+    const c = document.createElement('canvas');
+    c.width = w * 2; c.height = h * 2;
+    const x = c.getContext('2d');
+    x.fillStyle = $('#bc-bg').value; x.fillRect(0, 0, c.width, c.height);
+    x.drawImage(img, 0, 0, c.width, c.height);
+    download(c.toDataURL('image/png'), 'barcode.png');
+  };
+  img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svgString());
+});
+
+/* ---------- Password ---------- */
+function genPassword() {
+  const sets = {
+    up:  'ABCDEFGHIJKLMNOPQRSTUVWXYZ',
+    lo:  'abcdefghijklmnopqrstuvwxyz',
+    num: '0123456789',
+    sym: '!@#$%^&*()-_=+[]{};:,.?/'
+  };
+  const amb = /[0O1lI|]/g;
+  $('#pw-len-v').textContent = $('#pw-len').value;
+  const chosen = Object.keys(sets)
+    .filter(k => $('#pw-' + k).checked)
+    .map(k => $('#pw-amb').checked ? sets[k].replace(amb, '') : sets[k]);
+
+  const out = $('#pw-out'), bar = $('#pw-bar'), msg = $('#pw-msg');
+  if (!chosen.length) {
+    out.textContent = ''; bar.style.width = '0'; msg.textContent = 'Pilih minimal satu jenis karakter.';
+    $('#pw-copy').disabled = true; return;
+  }
+  $('#pw-copy').disabled = false;
+  const len = +$('#pw-len').value;
+  const all = chosen.join('');
+  const chars = chosen.map(s => s[rand(s.length)]);          // minimal satu dari tiap jenis
+  while (chars.length < len) chars.push(all[rand(all.length)]);
+  for (let i = chars.length - 1; i > 0; i--) {                // acak urutan
+    const j = rand(i + 1);
+    [chars[i], chars[j]] = [chars[j], chars[i]];
+  }
+  out.textContent = chars.join('');
+
+  const bits = len * Math.log2(all.length);
+  const level = bits < 45 ? 'Lemah' : bits < 65 ? 'Sedang' : bits < 90 ? 'Kuat' : 'Sangat kuat';
+  bar.style.width = Math.min(100, bits / 120 * 100) + '%';
+  msg.textContent = `${level} · sekitar ${Math.round(bits)} bit entropi`;
+}
+$('#view-password').addEventListener('input', genPassword);
+$('#pw-new').addEventListener('click', genPassword);
+$('#pw-copy').addEventListener('click', () => copyText($('#pw-out').textContent));
+
+/* ---------- UUID ---------- */
+function uuid4() {
+  if (crypto.randomUUID) return crypto.randomUUID();
+  const b = crypto.getRandomValues(new Uint8Array(16));
+  b[6] = (b[6] & 15) | 64; b[8] = (b[8] & 63) | 128;
+  const h = [...b].map(x => x.toString(16).padStart(2, '0')).join('');
+  return `${h.slice(0,8)}-${h.slice(8,12)}-${h.slice(12,16)}-${h.slice(16,20)}-${h.slice(20)}`;
+}
+function genUUID() {
+  const n = +$('#uu-n').value;
+  $('#uu-n-v').textContent = n;
+  const list = Array.from({ length: n }, () => {
+    let u = uuid4();
+    if ($('#uu-nd').checked) u = u.replace(/-/g, '');
+    return $('#uu-up').checked ? u.toUpperCase() : u;
+  });
+  $('#uu-out').value = list.join('\n');
+}
+$('#view-uuid').addEventListener('input', genUUID);
+$('#uu-new').addEventListener('click', genUUID);
+$('#uu-copy').addEventListener('click', () => copyText($('#uu-out').value));
+
+/* ---------- Lorem ipsum ---------- */
+const WORDS = ('lorem ipsum dolor sit amet consectetur adipiscing elit sed do eiusmod tempor incididunt ut labore et dolore magna aliqua enim ad minim veniam quis nostrud exercitation ullamco laboris nisi aliquip ex ea commodo consequat duis aute irure in reprehenderit voluptate velit esse cillum fugiat nulla pariatur excepteur sint occaecat cupidatat non proident sunt culpa qui officia deserunt mollit anim id est laborum').split(' ');
+function sentence() {
+  const len = 6 + rand(9);
+  const w = Array.from({ length: len }, () => WORDS[rand(WORDS.length)]);
+  if (len > 9) w[3 + rand(3)] += ',';
+  const s = w.join(' ');
+  return s[0].toUpperCase() + s.slice(1) + '.';
+}
+function genLorem() {
+  const n = +$('#lo-n').value;
+  $('#lo-n-v').textContent = n;
+  const paras = [];
+  for (let i = 0; i < n; i++) {
+    const count = 4 + rand(4);
+    const s = Array.from({ length: count }, sentence);
+    if (i === 0 && $('#lo-start').checked) s[0] = 'Lorem ipsum dolor sit amet, consectetur adipiscing elit.';
+    paras.push(s.join(' '));
+  }
+  $('#lo-out').value = paras.join('\n\n');
+}
+$('#view-lorem').addEventListener('input', genLorem);
+$('#lo-new').addEventListener('click', genLorem);
+$('#lo-copy').addEventListener('click', () => copyText($('#lo-out').value));
+
+/* ---------- Spin wheel ---------- */
+const WHEEL_COLORS = ['#059669', '#0F766E', '#0EA5E9', '#6366F1', '#8B5CF6', '#DB2777', '#EA580C', '#CA8A04'];
+let wheelRotation = 0;
+let wheelTimer;
+function getWheelOptions() {
+  return $('#wheel-options').value.split(/\r?\n/).map(option => option.trim()).filter(Boolean);
+}
+function renderWheel() {
+  const options = getWheelOptions();
+  const wheel = $('#wheel');
+  const ns = 'http://www.w3.org/2000/svg';
+  const center = 160, radius = 152;
+  wheel.replaceChildren();
+
+  options.forEach((option, index) => {
+    const startAngle = index * 360 / options.length - 90;
+    const endAngle = (index + 1) * 360 / options.length - 90;
+    const startX = center + radius * Math.cos(startAngle * Math.PI / 180);
+    const startY = center + radius * Math.sin(startAngle * Math.PI / 180);
+    const endX = center + radius * Math.cos(endAngle * Math.PI / 180);
+    const endY = center + radius * Math.sin(endAngle * Math.PI / 180);
+    const largeArc = endAngle - startAngle > 180 ? 1 : 0;
+    const segment = document.createElementNS(ns, 'path');
+    segment.setAttribute('d', `M ${center} ${center} L ${startX} ${startY} A ${radius} ${radius} 0 ${largeArc} 1 ${endX} ${endY} Z`);
+    segment.setAttribute('fill', WHEEL_COLORS[index % WHEEL_COLORS.length]);
+    segment.setAttribute('stroke', '#fff');
+    segment.setAttribute('stroke-width', '1.5');
+    wheel.append(segment);
+
+    const midAngle = (index + 0.5) * 360 / options.length;
+    const labelRadius = radius * 0.62;
+    const labelX = center + Math.sin(midAngle * Math.PI / 180) * labelRadius;
+    const labelY = center - Math.cos(midAngle * Math.PI / 180) * labelRadius;
+    const text = document.createElementNS(ns, 'text');
+    const readableAngle = midAngle > 90 && midAngle < 270 ? midAngle + 180 : midAngle;
+    const maxLength = options.length > 16 ? 8 : options.length > 10 ? 11 : 18;
+    text.setAttribute('class', 'wheel-label');
+    text.setAttribute('x', labelX);
+    text.setAttribute('y', labelY);
+    text.setAttribute('font-size', options.length > 16 ? '8' : options.length > 10 ? '10' : '12');
+    text.setAttribute('transform', `rotate(${readableAngle} ${labelX} ${labelY})`);
+    text.textContent = option.length > maxLength ? option.slice(0, maxLength - 1) + '…' : option;
+    wheel.append(text);
+  });
+  wheel.setAttribute('aria-label', options.length
+    ? `Pratinjau roda: ${options.join(', ')}`
+    : 'Pratinjau roda pilihan kosong');
+  $('#wheel-spin').disabled = options.length < 2;
+  if (options.length < 2) $('#wheel-result').textContent = 'Tambahkan minimal dua pilihan untuk memutar roda.';
+}
+$('#wheel-options').addEventListener('input', renderWheel);
+$('#wheel-spin').addEventListener('click', () => {
+  const options = getWheelOptions();
+  if (options.length < 2) {
+    renderWheel();
+    return;
+  }
+
+  clearTimeout(wheelTimer);
+  const selectedIndex = rand(options.length);
+  const center = (selectedIndex + 0.5) * 360 / options.length;
+  const offset = (360 - (wheelRotation % 360) - center + 360) % 360;
+  wheelRotation += 5 * 360 + offset;
+  $('#wheel-result').textContent = 'Roda sedang berputar...';
+  $('#wheel-spin').disabled = true;
+  $('#wheel-options').disabled = true;
+  $('#wheel').style.transform = `rotate(${wheelRotation}deg)`;
+
+  const finish = () => {
+    clearTimeout(wheelTimer);
+    $('#wheel-result').textContent = `Hasil: ${options[selectedIndex]}`;
+    $('#wheel-spin').disabled = false;
+    $('#wheel-options').disabled = false;
+  };
+  $('#wheel').addEventListener('transitionend', finish, { once: true });
+  wheelTimer = setTimeout(finish, 4500);
+});
+
+/* ---------- mulai ---------- */
+const start = location.hash.slice(1);
+show($('#nav button[data-tool="' + start + '"]') ? start : 'qr-text');
+</script>
+</body>
+</html>
