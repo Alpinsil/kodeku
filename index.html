@@ -137,6 +137,18 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 .wheel-dialog p{margin:0;color:var(--muted);overflow-wrap:anywhere}
 .wheel-dialog-result{margin:12px 0 20px!important;color:var(--accent-dark)!important;font-size:1.15rem;font-weight:700}
 .wheel-dialog-actions{display:flex;flex-direction:column;gap:8px}
+.wheel-history{margin-top:16px}
+.wheel-history-head{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.wheel-history-head .card-title{flex:1}
+.wheel-history-list{display:grid;gap:10px;padding:0;margin:0;list-style:none}
+.wheel-history-item{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px;border:1px solid var(--line);border-radius:12px}
+.wheel-history-info{min-width:0;display:grid;gap:4px}
+.wheel-history-result{font-weight:600;color:var(--ink);overflow-wrap:anywhere}
+.wheel-history-time{font-size:.8rem;color:var(--muted)}
+.wheel-history-edit{min-width:0;flex:1}
+.wheel-history-actions{display:flex;flex-wrap:wrap;gap:8px;flex:none}
+.btn.small{width:auto;min-height:40px;padding:8px 12px;font-size:.85rem}
+.wheel-history-empty{margin:0;color:var(--muted);font-size:.9rem}
 @media (min-width:520px){.wheel-dialog-actions{flex-direction:row}}
 
 #toast{
@@ -452,6 +464,14 @@ Pilihan 6</textarea>
             </div>
           </div>
         </div>
+        <section class="card wheel-history" aria-labelledby="wheel-history-title">
+          <div class="wheel-history-head">
+            <h2 class="card-title" id="wheel-history-title">Riwayat spin wheel</h2>
+            <button class="btn alt small" id="wheel-history-clear" type="button">Hapus semua</button>
+          </div>
+          <p class="wheel-history-empty" id="wheel-history-empty">Belum ada riwayat putaran.</p>
+          <ul class="wheel-history-list" id="wheel-history-list" aria-live="polite"></ul>
+        </section>
       </section>
     </main>
   </div>
@@ -831,9 +851,151 @@ $('#lo-copy').addEventListener('click', () => copyText($('#lo-out').value));
 
 /* ---------- Spin wheel ---------- */
 const WHEEL_COLORS = ['#059669', '#0F766E', '#0EA5E9', '#6366F1', '#8B5CF6', '#DB2777', '#EA580C', '#CA8A04'];
+const WHEEL_HISTORY_KEY = 'kodeku-wheel-history-v1';
 let wheelRotation = 0;
 let wheelTimer;
 let pendingWheelSelection;
+let wheelHistory = loadWheelHistory();
+let editingWheelHistoryId = null;
+renderWheelHistory();
+
+function loadWheelHistory() {
+  try {
+    const saved = localStorage.getItem(WHEEL_HISTORY_KEY);
+    if (!saved) return [];
+    const parsed = JSON.parse(saved);
+    if (!Array.isArray(parsed) || parsed.some(item =>
+      !item || typeof item.id !== 'string' || typeof item.result !== 'string' || typeof item.timestamp !== 'string'
+    )) {
+      throw new Error('Format riwayat spin wheel tidak valid.');
+    }
+    return parsed;
+  } catch (error) {
+    console.error('Gagal membaca riwayat spin wheel:', error);
+    toast('Riwayat spin wheel gagal dibaca dari browser.');
+    return [];
+  }
+}
+function saveWheelHistory() {
+  try {
+    localStorage.setItem(WHEEL_HISTORY_KEY, JSON.stringify(wheelHistory));
+    return true;
+  } catch (error) {
+    console.error('Gagal menyimpan riwayat spin wheel:', error);
+    toast('Riwayat gagal disimpan di browser.');
+    return false;
+  }
+}
+function renderWheelHistory() {
+  const list = $('#wheel-history-list');
+  list.replaceChildren();
+  $('#wheel-history-empty').hidden = wheelHistory.length > 0;
+  $('#wheel-history-clear').disabled = wheelHistory.length === 0;
+
+  wheelHistory.forEach(entry => {
+    const item = document.createElement('li');
+    item.className = 'wheel-history-item';
+    const info = document.createElement('div');
+    info.className = 'wheel-history-info';
+
+    if (editingWheelHistoryId === entry.id) {
+      const input = document.createElement('input');
+      input.className = 'wheel-history-edit';
+      input.type = 'text';
+      input.value = entry.result;
+      input.setAttribute('aria-label', 'Edit hasil spin wheel');
+      info.append(input);
+      requestAnimationFrame(() => { input.focus(); input.select(); });
+    } else {
+      const result = document.createElement('span');
+      result.className = 'wheel-history-result';
+      result.textContent = entry.result;
+      info.append(result);
+    }
+
+    const time = document.createElement('time');
+    time.className = 'wheel-history-time';
+    time.dateTime = entry.timestamp;
+    time.textContent = new Date(entry.timestamp).toLocaleString('id-ID');
+    info.append(time);
+
+    const actions = document.createElement('div');
+    actions.className = 'wheel-history-actions';
+    if (editingWheelHistoryId === entry.id) {
+      actions.append(
+        createWheelHistoryButton('Simpan', 'save', entry.id, 'btn small'),
+        createWheelHistoryButton('Batal', 'cancel', entry.id, 'btn alt small')
+      );
+    } else {
+      actions.append(
+        createWheelHistoryButton('Edit', 'edit', entry.id, 'btn alt small'),
+        createWheelHistoryButton('Hapus', 'delete', entry.id, 'btn alt small')
+      );
+    }
+    item.append(info, actions);
+    list.append(item);
+  });
+}
+function createWheelHistoryButton(label, action, id, className) {
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.className = className;
+  button.textContent = label;
+  button.dataset.action = action;
+  button.dataset.id = id;
+  return button;
+}
+function addWheelHistory(result) {
+  wheelHistory.unshift({ id: uuid4(), result, timestamp: new Date().toISOString() });
+  saveWheelHistory();
+  renderWheelHistory();
+}
+$('#wheel-history-list').addEventListener('click', event => {
+  const button = event.target.closest('button[data-action]');
+  if (!button) return;
+  const { action, id } = button.dataset;
+  const index = wheelHistory.findIndex(entry => entry.id === id);
+  if (index < 0) return;
+
+  if (action === 'edit') {
+    editingWheelHistoryId = id;
+    renderWheelHistory();
+  } else if (action === 'cancel') {
+    editingWheelHistoryId = null;
+    renderWheelHistory();
+  } else if (action === 'save') {
+    const result = $('.wheel-history-edit', button.closest('.wheel-history-item')).value.trim();
+    if (!result) {
+      toast('Hasil riwayat tidak boleh kosong.');
+      return;
+    }
+    wheelHistory[index].result = result;
+    editingWheelHistoryId = null;
+    saveWheelHistory();
+    renderWheelHistory();
+  } else if (action === 'delete') {
+    wheelHistory.splice(index, 1);
+    if (editingWheelHistoryId === id) editingWheelHistoryId = null;
+    saveWheelHistory();
+    renderWheelHistory();
+  }
+});
+$('#wheel-history-list').addEventListener('keydown', event => {
+  if (event.key === 'Enter' && event.target.matches('.wheel-history-edit')) {
+    event.preventDefault();
+    $('.wheel-history-actions button[data-action="save"]', event.target.closest('.wheel-history-item')).click();
+  } else if (event.key === 'Escape' && event.target.matches('.wheel-history-edit')) {
+    event.preventDefault();
+    $('.wheel-history-actions button[data-action="cancel"]', event.target.closest('.wheel-history-item')).click();
+  }
+});
+$('#wheel-history-clear').addEventListener('click', () => {
+  if (!wheelHistory.length || !confirm('Hapus semua riwayat spin wheel dari browser ini?')) return;
+  wheelHistory = [];
+  editingWheelHistoryId = null;
+  saveWheelHistory();
+  renderWheelHistory();
+});
 function getWheelOptions() {
   return $('#wheel-options').value.split(/\r?\n/).map(option => option.trim()).filter(Boolean);
 }
@@ -919,6 +1081,7 @@ $('#wheel-spin').addEventListener('click', () => {
     $('#wheel-result').textContent = `Hasil: ${selected}`;
     $('#wheel-spin').disabled = false;
     $('#wheel-options').disabled = false;
+    addWheelHistory(selected);
     $('#wheel-dialog-result').textContent = selected;
     $('#wheel-choice-dialog').showModal();
   };
